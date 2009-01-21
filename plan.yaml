@@ -1,0 +1,107 @@
+sweetpotato:
+
+    deadSwap:
+        - do: QueueIncomingMessages
+        - do: RegisterSleepers
+        - do: ForwardAgentMessages
+        - do: PromoteRabbits
+        #- do: ForwardRabbitMessages
+        - do: RegisterRabbits
+        #- do: DeployAgents
+        - do: SendOutgoingMessages
+
+    settings:
+        - tokens:
+            controlSmsNumber: 447942444444
+            workDir: "~/.deadSwap"
+            rabitSmsNumber: {{controlSmsNumber}}
+
+        - workfile:
+            path: {{workDir}}/README
+            do:
+                - write: "~# deadSwap.net"   
+                - write: "     >>> by Telekommunisten"
+
+    #~~
+    QueueIncomingMessages:
+        - require: settings
+        - lock:
+            key: smsInLock
+            db:
+                type: smsinbox
+                target: _saveSms
+                fields:
+                    smsId: id  
+                    smsText: text 
+                    smsNumber: caller_id_number 
+
+    _saveSms:
+        - lock:
+            - workfile:
+                path: "{{workDir}}/smsIn/{{smsNumber}}/{{smsId}}.sms"
+                overwrite: True
+                do:
+                    - write: {{smsText}} 
+    #~~
+    RegisterSleepers:
+        - require: settings
+        - tokens:
+            searchDir: "{{workDir}}/smsIn/{{controlSmsNumber}}"
+            searchTarget: "_registerSleeper"
+        - do: _searchMessages
+
+    _registerSleeper:
+        - readfile:
+            path: "{{searchDir}}/{{foundName}}"
+            info:
+                contents: sleeperSmsNumber
+        - workfile:
+            path: "{{workDir}}//sleepers/{{sleeperSmsNumber}}"
+            move: "{{searchDir}}/{{foundName}}"
+
+    #~~
+    ForwardAgentMessages:
+        - require: settings
+        - lock:
+            key: smsInLock
+            db:
+                path: "{{workDir}}/agents"
+                type: dir
+                target: _forEachAgent
+                fields:
+                    fromSmsNumber: name
+    _forEachAgent:
+        - unlink: "{{workDir}}/agents/{{fromSmsNumber}}"
+        - readfile:
+            path: "{{workDir}}/drops/{{fromSmsNumber}}"
+            info:
+                contents: toSmsNumber
+        - tokens:
+            searchDir: "{{workDir}}/smsIn/fromSmsNumber}}"
+            searchTarget: "_queueMessage"
+        - do: _searchMessages
+    
+
+###
+    _searchMessages:
+        - lock:
+            - db:
+                path: "{{searchDir}}"
+                type: dir
+                target: "{{searchTarget}}"
+                fields:
+                    foundName: name
+
+    _queueMessage:
+        - lock:
+            - readfile:
+                path: "{{workDir}}/drops/{{fromSmsNumber}}"
+                info:
+                    contents: toSmsNumber
+            - uniqueId: uniqueId
+            - workfile:
+                path: "{{workDir}}/smsOut/{{toSmsNumber}}.{{uniqueId}}"
+                do:
+                    move: "{{searchDir}}/{{foundName}}"
+
+
