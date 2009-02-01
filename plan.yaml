@@ -1,107 +1,250 @@
+#~
+#~  sweetpotato execution plan 
+#~                               http://www.telekommunisten.net/sweetpotato
+
 sweetpotato:
 
     deadSwap:
-        - do: QueueIncomingMessages
-        - do: RegisterSleepers
-        - do: ForwardAgentMessages
-        - do: PromoteRabbits
-        #- do: ForwardRabbitMessages
-        - do: RegisterRabbits
-        #- do: DeployAgents
-        - do: SendOutgoingMessages
+        - require: init
+        - lock:
+            - do: QueueIncomingMessages   # Pull SMS messages from GSM
+            - do: RegisterSleepers        # Add new sleepers from control
+            - do: ForwardAgentMessages    # Retire agent, rabbit is sleeper
+            - do: ForwardSleeperMessages  # Unretire agent, demote sleeper
+            - do: ForwardRabbitMessages   # Deploy agents
+        - do: deadSwap
 
-    settings:
-        - tokens:
-            controlSmsNumber: 447942444444
-            workDir: "~/.deadSwap"
-            rabitSmsNumber: {{controlSmsNumber}}
-
+    init:
+        # set initial tokens
+        - token:
+            controlSmsNumber: +447942444444
+            workDir: "/home/dk/.deadSwap"
+            rabbitSmsNumber: "{{controlSmsNumber}}"
+        # verify working directory exists and is writable
         - workfile:
-            path: {{workDir}}/README
+            path: "{{workDir}}/README"
             do:
                 - write: "~# deadSwap.net"   
                 - write: "     >>> by Telekommunisten"
-
+        - echo: "~# DEADSWAP ACTIVATED   @~~~"
     #~~
     QueueIncomingMessages:
-        - require: settings
-        - lock:
-            key: smsInLock
-            db:
-                type: smsinbox
+        - require: init
+        # transfer messages from sms inbox to queue directory
+        - db:
+            type: smsinbox
+            read:
                 target: _saveSms
+                delete: True
                 fields:
-                    smsId: id  
-                    smsText: text 
-                    smsNumber: caller_id_number 
+                    id: smsId
+                    text: smsText
+                    caller_id_number: smsNumber
 
     _saveSms:
+        - echo: "Recieved SMS from {{smsNumber}}"
         - lock:
-            - workfile:
+            key: deadSwapSmsInQueue
+            workfile:
                 path: "{{workDir}}/smsIn/{{smsNumber}}/{{smsId}}.sms"
                 overwrite: True
                 do:
-                    - write: {{smsText}} 
+                    - write: "{{smsText}}"
     #~~
     RegisterSleepers:
-        - require: settings
-        - tokens:
-            searchDir: "{{workDir}}/smsIn/{{controlSmsNumber}}"
+        - require: init
+        - token:
+            searchNumber: "{{controlSmsNumber}}"
             searchTarget: "_registerSleeper"
-        - do: _searchMessages
+        - do: _searchInQueue
 
     _registerSleeper:
-        - readfile:
-            path: "{{searchDir}}/{{foundName}}"
-            info:
-                contents: sleeperSmsNumber
-        - workfile:
-            path: "{{workDir}}//sleepers/{{sleeperSmsNumber}}"
-            move: "{{searchDir}}/{{foundName}}"
+        # the control phone can add new sleepers by sending their sms number
+        # to deadSwap.
+        - db:
+            path: "{{workDir}}/smsIn/{{controlSmsNumber}}/{{foundName}}"
+            type: file
+            read:
+                fields:
+                    content: sleeperSmsNumber 
+        - echo: "Registering {{sleeperSmsNumber}} as sleeper"
+        - lock:
+            key: deadSwapSmsInQueue
+            do:
+                - workfile:
+                    overwrite: True
+                    path: "{{workDir}}/sleepers/{{sleeperSmsNumber}}"
+                    do:
+                        - write: "{{controlSmsNumber}}"
+                - unlink: "{{workDir}}/smsIn/{{controlSmsNumber}}/{{foundName}}"
 
     #~~
     ForwardAgentMessages:
-        - require: settings
+        - require: init
         - lock:
-            key: smsInLock
             db:
                 path: "{{workDir}}/agents"
                 type: dir
-                target: _forEachAgent
-                fields:
-                    fromSmsNumber: name
-    _forEachAgent:
-        - unlink: "{{workDir}}/agents/{{fromSmsNumber}}"
-        - readfile:
-            path: "{{workDir}}/drops/{{fromSmsNumber}}"
-            info:
-                contents: toSmsNumber
-        - tokens:
-            searchDir: "{{workDir}}/smsIn/fromSmsNumber}}"
-            searchTarget: "_queueMessage"
-        - do: _searchMessages
-    
+                read:
+                    target: _forEachAgent
+                    fields:
+                        name: fromSmsNumber
 
-###
-    _searchMessages:
+    _forEachAgent:
+        # get rabbit number 
+        - db:
+            path: "{{workDir}}/agents/{{fromSmsNumber}}"
+            type: file
+            read:
+                fields:
+                    content: toSmsNumber
+        # deliver agent message to rabbit
+        - token:
+            searchNumber: "{{fromSmsNumber}}"
+            searchTarget: _retireAgent
+        - do: _searchInQueue
+    
+    _retireAgent:
+        - unlink: "{{workDir}}/agents/{{fromSmsNumber}}"
+        - echo: "messsage from agent {{fromSmsNumber}} to rabbit {{toSmsNumber}}"
+        - do: _forwardMessage
+        # promote rabbit to sleeper
+        - workfile:
+            path: "{{workDir}}/sleepers/{{toSmsNumber}}"
+            overwrite: true
+            # save agent number for follow-up
+            do:
+                - write: "{{fromSmsNumber}}"
+
+    #~~
+    ForwardSleeperMessages:
+        - require: init
+        - lock:
+            db:
+                path: "{{workDir}}/sleepers"
+                type: dir
+                read:
+                    target: _forEachSleeper
+                    fields:
+                        name: fromSmsNumber
+
+    _forEachSleeper:
+        # get agent number 
+        - db:
+            path: "{{workDir}}/sleepers/{{fromSmsNumber}}"
+            type: file
+            read:
+                fields:
+                    content: toSmsNumber
+        # deliver sleeper message to agent
+        - token:
+            searchNumber: "{{fromSmsNumber}}"
+            searchTarget: "_forwardMessage"
+        - do: _searchInQueue
+
+    _demoteSleeper:
+        - unlink: "{{workDir}}/sleepers/{{fromSmsNumber}}"
+        - echo: "messsage from rabbit {{fromSmsNumber}} to agent {{toSmsNumber}}"
+        - do: _forwardMessage
+        # unretire agent
+        - workfile:
+            path: "{{workDir}}/agents/{{toSmsNumber}}"
+            overwrite: true
+            # save rabbit number for follow-up
+            do:
+                - write: "{{fromSmsNumber}}"
+
+    #~~
+    ForwardRabbitMessages:
+        - require: init
         - lock:
             - db:
-                path: "{{searchDir}}"
+                path: "{{workDir}}/smsIn"
                 type: dir
-                target: "{{searchTarget}}"
-                fields:
-                    foundName: name
+                read:
+                    target: _forEachRabbit
+                    fields:
+                        name: fromSmsNumber
 
-    _queueMessage:
+    _forEachRabbit:
         - lock:
-            - readfile:
-                path: "{{workDir}}/drops/{{fromSmsNumber}}"
-                info:
-                    contents: toSmsNumber
-            - uniqueId: uniqueId
+            # Search for a sleeper
+            - db:
+                path: "{{workDir}}/sleepers"
+                type: dirshift
+                age: 2
+                read:
+                    target: _deployAgent
+                    fields:
+                        name: toSmsNumber
+
+    _deployAgent:
+        - echo: "assign agent {{toSmsNumber}} to rabbit {{fromSmsNumber}}"
+        # Send Rabbit Message To Sleeper
+        - token:
+            searchNumber: "{{fromSmsNumber}}"
+            searchTarget: "_forwardMessage"
+        - do: _searchInQueue
+        # Deploy sleeper as agent
+        - do:
+            - unlink: "{{workDir}}/sleepers/{{toSmsNumber}}"
             - workfile:
-                path: "{{workDir}}/smsOut/{{toSmsNumber}}.{{uniqueId}}"
+                path: "{{workDir}}/agents/{{toSmsNumber}}"
+                overwrite: True
+                # save rabbit number for follow-up
                 do:
-                    move: "{{searchDir}}/{{foundName}}"
+                    - write: "{{fromSmsNumber}}"
 
+###
+    _searchInQueue:
+        - lock:
+            key: deadSwapSmsInQueue
+            do:
+                - db:
+                    path: "{{workDir}}/smsIn/{{searchNumber}}"
+                    type: dir
+                    read:
+                        target: "{{searchTarget}}"
+                        fields:
+                            name: foundName
+                - rmdir: "{{workDir}}/smsIn/{{searchNumber}}"
 
+    _forwardMessage:
+        - echo: "sending SMS to {{toSmsNumber}}"
+        - lock:
+            - db:
+                type: file
+                path: "{{workDir}}/smsIn/{{searchNumber}}/{{foundName}}"
+                read:
+                    fields:
+                        content: smsText
+            - sendsms:
+                to: "{{toSmsNumber}}"
+                text: "{{smsText}}"
+            - unlink: "{{workDir}}/smsIn/{{searchNumber}}/{{foundName}}"
+
+#~~~~~~~~~~~~~~~ test fixtures ~~~@
+    __testFixtures:
+        - require: init 
+        #add some incoming message
+        - workfile:
+            path: "{{workDir}}/smsIn/{{controlSmsNumber}}/1917.sms"
+            overwrite: True
+            do:
+                - write: "0014169671111"
+        - workfile:
+            path: "{{workDir}}/smsIn/0014169671111/1917.sms"
+            overwrite: True
+            do:
+                - write: "Help! I'm lost!"
+        - workfile:
+            path: "{{workDir}}/smsIn/01632866163/1917.sms"
+            overwrite: True
+            do:
+                - write: "I'm interested in a delivery"
+        #add a sample agent
+        - workfile: 
+            path: "{{workDir}}/agents/{{controlSmsNumber}}"
+            overwrite: True
+            do:
+                - write: "0014169671111"
