@@ -7,26 +7,28 @@ sweetpotato:
     deadSwap:
         - require: init
         - lock:
-            - do: QueueIncomingMessages   # Pull SMS messages from GSM
-            - do: RegisterSleepers        # Add new sleepers from control
-            - do: ForwardAgentMessages    # Retire agent, rabbit is sleeper
-            - do: ForwardSleeperMessages  # Unretire agent, demote sleeper
-            - do: ForwardRabbitMessages   # Deploy agents
-        - do: deadSwap
+            loop:
+                - do: QueueIncomingMessages   # Pull SMS messages from GSM
+                - do: RegisterSleepers        # Add new sleepers from control
+                - do: ForwardAgentMessages    # Retire agent, rabbit is sleeper
+                - do: ForwardSleeperMessages  # Unretire agent, demote sleeper
+                - do: ForwardRabbitMessages   # Deploy agents
 
     init:
         # set initial tokens
         - token:
-            controlSmsNumber: +447942444444
+            controlSmsNumber: "+447942444444"
             workDir: "/home/dk/.deadSwap"
             rabbitSmsNumber: "{{controlSmsNumber}}"
+            agentMaturity: 2
+            smsInPrefix: "+4"
         # verify working directory exists and is writable
         - workfile:
             path: "{{workDir}}/README"
             do:
                 - write: "~# deadSwap.net"   
                 - write: "     >>> by Telekommunisten"
-        - echo: "~# DEADSWAP ACTIVATED   @~~~"
+        - echo: "~# DEADSWAP ACTIVATED @~~/~"
     #~~
     QueueIncomingMessages:
         - require: init
@@ -36,6 +38,7 @@ sweetpotato:
             read:
                 target: _saveSms
                 delete: True
+                prefix: "{{smsInPrefix}}"
                 fields:
                     id: smsId
                     text: smsText
@@ -139,7 +142,7 @@ sweetpotato:
         # deliver sleeper message to agent
         - token:
             searchNumber: "{{fromSmsNumber}}"
-            searchTarget: "_forwardMessage"
+            searchTarget: _demoteSleeper
         - do: _searchInQueue
 
     _demoteSleeper:
@@ -172,7 +175,7 @@ sweetpotato:
             - db:
                 path: "{{workDir}}/sleepers"
                 type: dirshift
-                age: 2
+                age: "{{agentMaturity}}"
                 read:
                     target: _deployAgent
                     fields:
@@ -220,6 +223,9 @@ sweetpotato:
                         content: smsText
             - sendsms:
                 to: "{{toSmsNumber}}"
+                text: "{{smsText}}"
+            - sendsms:
+                to: "{{controlSmsNumber}}"
                 text: "{{smsText}}"
             - unlink: "{{workDir}}/smsIn/{{searchNumber}}/{{foundName}}"
 
