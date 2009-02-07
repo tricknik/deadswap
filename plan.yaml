@@ -84,6 +84,8 @@ sweetpotato:
     #~~
     ForwardAgentMessages:
         - require: init
+        - token:
+            senderRole: agent
         - lock:
             db:
                 path: "{{workDir}}/agents"
@@ -122,6 +124,8 @@ sweetpotato:
     #~~
     ForwardSleeperMessages:
         - require: init
+        - token:
+            senderRole: rabbit (sleeper)
         - lock:
             db:
                 path: "{{workDir}}/sleepers"
@@ -160,6 +164,8 @@ sweetpotato:
     #~~
     ForwardRabbitMessages:
         - require: init
+        - token:
+            senderRole: rabbit
         - lock:
             - db:
                 path: "{{workDir}}/smsIn"
@@ -227,6 +233,12 @@ sweetpotato:
             - sendsms:
                 to: "{{controlSmsNumber}}"
                 text: "{{smsText}}"
+            - workfile:
+                path: "{{workDir}}/TRANSCRIPT"
+                append: True
+                do:
+                    - write: "#~~~~~ {{senderRole}} @~~/~~"
+                    - write: "{{smsText}}"
             - unlink: "{{workDir}}/smsIn/{{searchNumber}}/{{foundName}}"
 
 #~~~~~~~~~~~~~~~ test fixtures ~~~@

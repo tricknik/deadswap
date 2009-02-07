@@ -1,0 +1,60 @@
+
+This is the artistic statement for the upcoming Telekommunisten intervention at 
+the Souseveillance conference in Aarhus, announcing the launch of deadSwap, 
+the clandestine offline file sharing system.
+
+Please forward and repost, comments welcome!
+
+
+deadSwap: The Internet is dead, long live the sneakernet.
+
+Dmytri Kleiner
+
+
+A major impact of the commercialization of the Internet has been the undermining
+of its peer to peer architecture. As Capital must always control the circulation 
+of value in order to appropriate surplus, its champions views peer networks as 
+a threat. The Web, although it sits on top of the Internet, is not a peer to peer 
+technology, but rather a client-server system where the interactions of the users
+of any given website are controlled and mediated by that site's publishers.
+
+With such centralization and control, this puts Capital in the position of capturing
+the value created by the user's of these sites by way of selling this audience of
+users as a commodity to publishers of marketing and propaganda. More importantly,
+the Capitalist financed operators of such sites, can sell the data of the users, which
+often includes significant personal and demographic details, raw data
+for biometrics and detailed relationship graphs, to those that want to use this data
+to study, manipulate or control these users. The operators of these private, 
+centralized service can also silence and lock out any user from participating or act
+to prevent any type of usage that is contrary to their own interests.
+
+The new "Social Web" has fundamentally replaced the peer to peer Internet, and 
+remaining peer communications technology as become marginal or even contraband as
+participants on peer networks face ever increasing legal attack and active sabotage
+from groups representing the interests of Capital.
+
+The Internet is dead. In order to evade the flying monkeys of capitalist control, 
+peer communication can only abandon the Internet for the dark alleys of
+covert operations. Peer to peer is now driven offline and can only survive in 
+clandestine cells.
+
+deadSwap is an offline file sharing system, where participants covertly pass a USB
+stick from one to another. The route of the USB memory stick and the identity of the
+other participants is not known by the users, but controlled by a local 
+independently operated SMS gateway that is kept as a carefully shared secret by 
+its users.
+
+The system was developed for Sousveillance and the first version of the system will 
+be launched during the event (Sunday February 8, 12.30-17.00), creating the world’s 
+first deadSwap network in Aarhus. The deadSwap workshop by Dmytri Kleiner 
+starts at 12.30, lunch room Wiener building, Information and Media Studies 
+Department, Helsingforsgade 14, 8200 Aarhus 
+
+Information regarding setting up and participating in deadSwap networks can be found on
+deadSwap.net
+
+~# DARC - Digital Aesthetics Research // deadSwap in Aarhus:
+~# http://darc.imv.au.dk/?p=81
+
+
+

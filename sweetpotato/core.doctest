@@ -1,0 +1,48 @@
+Sweetpotato
+===========
+Core Sweetpotato Classes
+------------------------
+
+Sweetpotato has a small core with three classes:
+ - A Sweetpotato instance is a running process
+ - A Task does something and can contain child tasks
+ - A Task Adapter defines what a task does
+
+Sweetpotato is extended by creating task adapters
+
+Define a simple task adapter:
+
+>>> import sys, os
+>>> sys.path.append(os.path.abspath(os.curdir))
+>>> from sweetpotato.core import SweetPotato, TaskAdapter
+>>> class myadapter(TaskAdapter):
+...     def runChildTasks(self):
+...         print 'A SWEETPOTATO'
+...         TaskAdapter.runChildTasks(self)
+...     def run(self):
+...         print self.task.getProperty('value')
+
+Define some build data:
+
+>>> data =  \
+... {'sweetpotato':
+...     {'test':
+...         [{'token': {'what':'YAM'}},
+...             {'myadapter': 'IS NOT A {{what}}'}]}}
+
+The root element must be 'sweetpotato', which contains
+a dictionary of targets, each target is a transaction that
+contains a list of tasks.
+
+A target is implemented as a task with no type.
+
+Instantiate a sweetpotato session, load the test data and 
+run the test target:
+
+>>> sp = SweetPotato()
+>>> sp.addAdapter(myadapter)
+>>> sp.load(data)
+>>> sp.run('test')
+A SWEETPOTATO
+IS NOT A YAM
+

@@ -1,0 +1,159 @@
+= deadSwap =
+
+deadSwap is a clandestine offline file sharing system. It is
+easy to use, but will only work as expected if used correctly,
+the instructions in this manual will make you a real deadSwap 
+secret agent.
+
+
+= the secret agent's lexicon =
+
+Becoming a super-spy isn't easy, like any undercover
+operation, most of the functionality of deadSwap depends on the
+participants doing it right. Learn the terms in this manual well 
+and play your role as intended for best results.
+
+
+== The Drop ==
+
+The data being shared by deadSwap is all carried on a USB Memory Stick,
+that is passed around by the participants in the network from one to 
+another.
+
+This stick is called "The Drop"
+
+On The Drop are files and directories for sharing data, and also a Wiki
+for posting messages for other participants.
+
+
+== The Gateway ==
+
+The participants co-ordinate the passing-on of The Drop by sending 
+SMS (Text) messages to The Gateway. Each deadSwap network has it's
+own Gateway, which has a number to send texts to, you must know the
+number of your Gateway to participate so when you are told it, store
+it in your phone.
+
+All messages sent by participants are sent to the Gateway and all 
+messages received are received from the Gateway. 
+Participants do not know each other's mobile numbers.
+
+The only way you will be able to know that a message you receive is
+from a deadSwap participant is because it will come from The Gateway. 
+
+
+== rabbits, sleepers and agents ==
+
+deadSwap participants are always playing one of three roles: The rabbit,
+the sleeper, and the agent.
+
+A participant is a RABBIT if they DO NOT have The Drop. To get The Drop 
+the rabbit sends an SMS to The Gateway. This message should be subtle 
+and covert, something like "I want to play," or "Want to meet?" It should 
+not mention deadSwap, nor should any files be offered or requested.
+
+A participant is a SLEEPER when they DO have The Drop but HAVE NOT received
+any messages from The Gateway yet. The sleeper waits and does nothing 
+until a message is received. The sleeper can, of course, because they 
+have The Drop, read and post messages on the Wiki, browse the available 
+files and directories, upload new files, and copy the files they want 
+to keep. The Sleeper should never send any messages to The Gateway, 
+they must wait to receive one.
+
+The participant is an AGENT when they DO have The Drop and HAVE received a 
+message from The Gateway. Having received a message, they are no longer a 
+sleeper, but now an agent with an assignment: Deliver The Drop. The message they 
+received will be from a rabbit, the content of this message is not important, 
+whatever it says, it means the agent should deliver The Drop to this rabbit. 
+The agent should send one response containing instructions for the rabbit,
+the instructions can be where the rabbit should wait for the agent, if
+the agent will personally deliver The Drop, or where the rabbit can find 
+The Drop if the agent will leave it somewhere for them. The instructions 
+should be clear, so the rabbit knows what to do. If the Rabbit responds with 
+any questions the agent must also respond to these. It is crucial the agent 
+responds to each message the rabbit sends, and also it is crucial they only send
+one response to each message and never more than one. 
+
+Once the Agent has responded to the each of rabbit's messages and delivered 
+The Drop, the agent is retired and has no further responsibilities. They can 
+now re-enter the network as a rabbit by sending a message to The Gateway.
+
+Once the rabbit has received The Drop the rabbit is now a sleeper, and should not
+send any further messages to The Gateway, not even to thank the agent, nor to 
+confirm that The Drop has been received.
+
+The success of the network depends on the competence and diligence of 
+the participants.
+
+
+= deadSwap network advantages =
+
+deadSwap is particularly useful in situations where a private and difficult to
+discover and monitor network is desired and/or a where Internet availability 
+is difficult.
+
+
+= open deadSwap networks =
+
+Open deadSwap networks exist for entertainment and training purposes, because 
+using deadSwap is a fun way to share and communicate, these networks should not 
+be considered clandestine and are intended to be a training ground for novice 
+secret agents to perfect their skills. Open deadSwap networks are listed on 
+deadSwap.net and any interested party is welcome to participate. 
+
+Even with open networks, competence and diligence in performing the roles 
+correctly is essential. To be covert and as difficult to detect as possible, 
+deadSwap SMS messages contain no special control commands, and thus The 
+Gateway only know the location and destination of The Drop when the 
+participants carry out the roles correctly.
+
+It is strongly recommended to begin particpating in an open deadSwap network
+as soon as possible. When difficult social conditions impose the necessity of 
+employing a deadSwap network the chances of discovery, data loss, or 
+miscommunication are reduced when the participants are already seasoned deadSwap
+secret agents.
+
+
+= setting up a new deadSwap network =
+
+The Software to run a deadSwap network can be acquired from deadSwap.net as a live 
+USB memory stick, when a computer is booted from this USB stick it becomes 
+The Gateway. For the Gateway to function, a mobile telephone with an active SIM must
+be attached to it with a data cable. The number to send messages to this SIM is
+The Gateway SMS number that all messages are sent to and recieved from. The operators
+of the network must ensure that the SIM has sufficient credit to send messages. This
+number must be made known to other particpants.
+
+Once The Gatway is set up, the operator can download an empty Drop from deadSwap.net,
+copy the contents to a USB stick, and become an initial sleeper agent.
+
+Operators of open networks should send details to bildungsamt@deadswap.net
+
+
+= the secret agent's reference =
+
+TERM
+The Drop      The USB Memory stick that is passed around
+The Gateway   Where all SMS messages are sent to and received from
+rabbit        A participant who does not have the drop
+sleeper       A participant who has the drop, but has not received a message
+agent         A participant who has the drop and has received a message
+
+ROLE      DEADSWAP RESPONSIBILITIES
+rabbit    follow received instructions and collect The Drop
+sleeper   wait, keep The Drop safe
+agent     give rabbit instructions and deliver The Drop
+
+ROLE      GATEWAY INTERACTION RULES
+rabbit    send 1 message, reply to received messages only if necessary
+sleeper   send no messages, wait  
+agent     send 1 (only 1) reply each time a message is recieved 
+
+If any deadSwap network should attract unwanted attention from authoroties, all 
+partcipants should maintain that deadSwap is just a game in the tradition of urban 
+role playing and artistic explorations of social geography, and also never reveal 
+any information regaring other participants.
+
+deadSwap is a miscommunication technology by Telekommunisten, for more information, 
+see deadSwap.net
+
