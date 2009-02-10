@@ -10,18 +10,24 @@ sweetpotato:
             loop:
                 - do: QueueIncomingMessages   # Pull SMS messages from GSM
                 - do: RegisterSleepers        # Add new sleepers from control
-                - do: ForwardAgentMessages    # Retire agent, rabbit is sleeper
-                - do: ForwardSleeperMessages  # Unretire agent, demote sleeper
-                - do: ForwardRabbitMessages   # Deploy agents
+                - do: ProcessQueue            # Process Queue
+
+    ProcessQueue:
+        - require: init
+        - do: ForwardAgentMessages    # Retire agent, rabbit is sleeper
+        - do: ForwardSleeperMessages  # Unretire agent, demote sleeper
+        - do: ForwardRabbitMessages   # Deploy agents
 
     init:
         # set initial tokens
         - token:
-            controlSmsNumber: "+447942444444"
+            controlSmsNumber: "+491632866163"
             workDir: "/home/dk/.deadSwap"
+            agentMaturity: 15
+            smsInPrefix: "+"
+        # defaults
+            sendSmsTarget: sendSms
             rabbitSmsNumber: "{{controlSmsNumber}}"
-            agentMaturity: 2
-            smsInPrefix: "+4"
         # verify working directory exists and is writable
         - workfile:
             path: "{{workDir}}/README"
@@ -110,7 +116,6 @@ sweetpotato:
         - do: _searchInQueue
     
     _retireAgent:
-        - unlink: "{{workDir}}/agents/{{fromSmsNumber}}"
         - echo: "messsage from agent {{fromSmsNumber}} to rabbit {{toSmsNumber}}"
         - do: _forwardMessage
         # promote rabbit to sleeper
@@ -120,6 +125,7 @@ sweetpotato:
             # save agent number for follow-up
             do:
                 - write: "{{fromSmsNumber}}"
+        - unlink: "{{workDir}}/agents/{{fromSmsNumber}}"
 
     #~~
     ForwardSleeperMessages:
@@ -150,7 +156,6 @@ sweetpotato:
         - do: _searchInQueue
 
     _demoteSleeper:
-        - unlink: "{{workDir}}/sleepers/{{fromSmsNumber}}"
         - echo: "messsage from rabbit {{fromSmsNumber}} to agent {{toSmsNumber}}"
         - do: _forwardMessage
         # unretire agent
@@ -160,6 +165,7 @@ sweetpotato:
             # save rabbit number for follow-up
             do:
                 - write: "{{fromSmsNumber}}"
+        - unlink: "{{workDir}}/sleepers/{{fromSmsNumber}}"
 
     #~~
     ForwardRabbitMessages:
@@ -196,13 +202,13 @@ sweetpotato:
         - do: _searchInQueue
         # Deploy sleeper as agent
         - do:
-            - unlink: "{{workDir}}/sleepers/{{toSmsNumber}}"
             - workfile:
                 path: "{{workDir}}/agents/{{toSmsNumber}}"
                 overwrite: True
                 # save rabbit number for follow-up
                 do:
                     - write: "{{fromSmsNumber}}"
+            - unlink: "{{workDir}}/sleepers/{{toSmsNumber}}"
 
 ###
     _searchInQueue:
@@ -227,42 +233,90 @@ sweetpotato:
                 read:
                     fields:
                         content: smsText
+            - do: "{{sendSmsTarget}}"
+            - unlink: "{{workDir}}/smsIn/{{searchNumber}}/{{foundName}}"
+
+    sendSms:
             - sendsms:
                 to: "{{toSmsNumber}}"
                 text: "{{smsText}}"
-            - sendsms:
-                to: "{{controlSmsNumber}}"
-                text: "{{smsText}}"
-            - workfile:
-                path: "{{workDir}}/TRANSCRIPT"
-                append: True
-                do:
-                    - write: "#~~~~~ {{senderRole}} @~~/~~"
-                    - write: "{{smsText}}"
-            - unlink: "{{workDir}}/smsIn/{{searchNumber}}/{{foundName}}"
 
-#~~~~~~~~~~~~~~~ test fixtures ~~~@
-    __testFixtures:
-        - require: init 
-        #add some incoming message
+#~
+#~ TEST TARGETS
+#~~~
+
+    # System Test
+    testSystem:
+        - require: init
+        - do: testCleanUp
+        - token:
+            agentMaturity: 0
+            sendSmsTarget: testMockSendSms
+
+        - echo: ":: Sleeper +86 should be registered"
+        - do: testNewSleeper
+        - do: ProcessQueue
+
+        - echo: ":: Message from rabbit +99 sent to agent +86"
+        - echo: ":: Sleeper +86 becomes agent for rabbit +99"
+        - do: testRabbitMessage
+        - do: ProcessQueue
+
+        - echo: ":: Message from agent +86 sent to rabbit +99"
+        - echo: ":: Rabbit +99 Should become a sleeper"
+        - do: testAgentMessage
+        - do: ProcessQueue
+
+    # Clean Up
+    testCleanUp:
+        - require: init
+        - unlink: "{{workDir}}/agents/{{controlSmsNumber}}"
+        - unlink: "{{workDir}}/sleepers/+99"
+
+    # Mock sendSms
+    testMockSendSms:
+            - echo: "<sms>"
+            - echo: "to: {{toSmsNumber}}"
+            - echo: "{{smsText}}"
+            - echo: "</sms>"
+
+    # Test New Sleeper
+    testNewSleeper:
+        - require: init
         - workfile:
-            path: "{{workDir}}/smsIn/{{controlSmsNumber}}/1917.sms"
-            overwrite: True
+            path: "{{workDir}}/sleepers/+86"
             do:
-                - write: "0014169671111"
+                - write: "{{controlSmsNumber}}"
+ 
+    # Test Rabbit Message
+    testRabbitMessage:
+        - require: init
         - workfile:
-            path: "{{workDir}}/smsIn/0014169671111/1917.sms"
-            overwrite: True
+            path: "{{workDir}}/smsIn/+99/rabbit.sms"
             do:
-                - write: "Help! I'm lost!"
+                - write: "h€l1ø Agent"
+
+    # Test Agent Message
+    testAgentMessage:
+        - require: init
         - workfile:
-            path: "{{workDir}}/smsIn/01632866163/1917.sms"
+            path: "{{workDir}}/agents/+86"
             overwrite: True
             do:
-                - write: "I'm interested in a delivery"
-        #add a sample agent
-        - workfile: 
-            path: "{{workDir}}/agents/{{controlSmsNumber}}"
+                - write: "+1632866163"
+        - workfile:
+            path: "{{workDir}}/smsIn/+86/agent.sms"
             overwrite: True
             do:
-                - write: "0014169671111"
+                - write: "hellø rabb→t!"
+
+    # Test SMS Sending
+    testSms:
+        - require: init
+        - echo: "{{controlSmsNumber}}"
+        - echo: "W€£cøme To dæd$wap"
+        - token:
+            toSmsNumber: "{{controlSmsNumber}}"
+            smsText: "W€£cøme To dæd$wap"
+        - do: "{{sendSmsTarget}}" 
+
