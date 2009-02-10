@@ -144,7 +144,7 @@ sweetpotato:
         - do: _searchInQueue
     
     _retireAgent:
-        - echo: "messsage from agent {{fromSmsNumber}} to rabbit {{toSmsNumber}}"
+        - echo: "message from agent {{fromSmsNumber}} to rabbit {{toSmsNumber}}"
         - do: _forwardMessage
         # promote rabbit to sleeper
         - workfile:
@@ -184,7 +184,7 @@ sweetpotato:
         - do: _searchInQueue
 
     _demoteSleeper:
-        - echo: "messsage from rabbit {{fromSmsNumber}} to agent {{toSmsNumber}}"
+        - echo: "message from rabbit {{fromSmsNumber}} to agent {{toSmsNumber}}"
         - do: _forwardMessage
         # unretire agent
         - workfile:
@@ -276,52 +276,44 @@ sweetpotato:
     # System Test
     testSystem:
         - require: init
-        - do: testCleanUp
         - token:
             agentMaturity: 0
             sendSmsTarget: testMockSendSms
+            testUnicodeString: "£²³€½¾ø→↓←ŧ¶łæßðđŋħjĸłµ”“¢»«" 
+
+        # make shure there is no agent 99
+        - unlink: "{{workDir}}/agents/+99"
 
         - echo: ":: Sleeper +86 registered"
         - do: testNewSleeper
         - do: ProcessQueue
 
-        - echo: ":: Message from rabbit +99 sent to agent +86"
-        - echo: ":: Sleeper +86 becomes agent for rabbit +99"
+        - echo: ":: Message from rabbit +99"
         - do: testMessageFrom99
         - do: ProcessQueue
 
-        - echo: ":: Message from agent +86 sent to rabbit +99"
         - echo: ":: Rabbit +99 becomes a sleeper"
         - do: testMessageFrom86
         - do: ProcessQueue
 
-        - echo: ":: Message from rabbit +99 sent to agent +86"
         - echo: ":: Sleeper +99 becomes a rabbit again, agent +86 unretired"
         - do: testMessageFrom99
         - do: ProcessQueue
 
-        - echo: ":: Message from agent +86 sent to rabbit +99"
-        - echo: ":: Rabbit +99 becomes a sleeper again"
+        - echo: ":: Rabbit +99 becomes a sleeper again, 86 retired"
         - do: testMessageFrom86
         - do: ProcessQueue
 
-        - echo: ":: Message from agent +86 sent to rabbit +99"
-        - echo: ":: Sleeper +99 becomes agent for rabbit +86"
+        - echo: ":: Message from rabbit +86"
         - do: testMessageFrom86
         - do: ProcessQueue
-        - do: testCleanUp
 
-    # Clean Up
-    testCleanUp:
-        - require: init
+        # clean up
         - unlink: "{{workDir}}/agents/+99"
 
     # Mock sendSms
     testMockSendSms:
-            - echo: "<sms>"
-            - echo: "to: {{toSmsNumber}}"
             - echo: "{{smsText}}"
-            - echo: "</sms>"
 
     # Test New Sleeper
     testNewSleeper:
@@ -337,7 +329,7 @@ sweetpotato:
         - workfile:
             path: "{{workDir}}/smsIn/+99/rabbit.sms"
             do:
-                - write: "h€l1ø 86"
+                - write: "h€£łø 86. {{testUnicodeString}}"
 
     # Test Agent Message
     testMessageFrom86:
@@ -346,7 +338,7 @@ sweetpotato:
             path: "{{workDir}}/smsIn/+86/agent.sms"
             overwrite: True
             do:
-                - write: "hi→ 99!"
+                - write: "ħi¥Æ 99! {{testUnicodeString}}"
 
     # Test SMS Sending
     testSms:
@@ -355,6 +347,6 @@ sweetpotato:
         - echo: "W€£cøme To dæd$wap"
         - token:
             toSmsNumber: "{{controlSmsNumber}}"
-            smsText: "W€£cøme To dæd$wap"
+            smsText: "W€łcøme ŦØ dæd$waÞ // Ł§Ø¥ĦÆß"
         - do: "{{sendSmsTarget}}" 
 

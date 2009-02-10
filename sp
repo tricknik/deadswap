@@ -22,6 +22,6 @@ def main():
 	sweetpotato = SweetPotato(options)
 	for target in args:
 		sweetpotato.run(target)
-		sweetpotato.log('BUILD FINISHED\n')
+		sweetpotato.log('PLAN FINISHED\n')
 if "__main__" ==  __name__:
 	main()
