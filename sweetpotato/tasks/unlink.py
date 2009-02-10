@@ -8,5 +8,10 @@ class unlink(TaskAdapter):
     """
     def run(self):
             path = self.task.getProperty('value')
-            os.unlink(path)
-
+            try:
+                os.unlink(path)
+            except:
+                if os.path.exists(path):
+                    raise Exception, "Unlink Failed: %s" % path
+                else:
+                    pass
