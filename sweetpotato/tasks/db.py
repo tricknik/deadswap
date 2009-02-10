@@ -87,7 +87,8 @@ def dbFile(task):
         task.log("reading %s" % path, logging.DEBUG)
         if os.path.isfile(path):
             file = open(path)
-            content = file.read()
+            raw = file.read()
+            content = raw.decode('UTF-8')
             row = {'path': path,
                    'name': os.path.basename(path),
                    'content': content.strip()
