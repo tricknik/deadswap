@@ -253,25 +253,40 @@ sweetpotato:
             agentMaturity: 0
             sendSmsTarget: testMockSendSms
 
-        - echo: ":: Sleeper +86 should be registered"
+        - echo: ":: Sleeper +86 registered"
         - do: testNewSleeper
         - do: ProcessQueue
 
         - echo: ":: Message from rabbit +99 sent to agent +86"
         - echo: ":: Sleeper +86 becomes agent for rabbit +99"
-        - do: testRabbitMessage
+        - do: testMessageFrom99
         - do: ProcessQueue
 
         - echo: ":: Message from agent +86 sent to rabbit +99"
-        - echo: ":: Rabbit +99 Should become a sleeper"
-        - do: testAgentMessage
+        - echo: ":: Rabbit +99 becomes a sleeper"
+        - do: testMessageFrom86
         - do: ProcessQueue
+
+        - echo: ":: Message from rabbit +99 sent to agent +86"
+        - echo: ":: Sleeper +99 becomes a rabbit again, agent +86 unretired"
+        - do: testMessageFrom99
+        - do: ProcessQueue
+
+        - echo: ":: Message from agent +86 sent to rabbit +99"
+        - echo: ":: Rabbit +99 becomes a sleeper again"
+        - do: testMessageFrom86
+        - do: ProcessQueue
+
+        - echo: ":: Message from agent +86 sent to rabbit +99"
+        - echo: ":: Sleeper +99 becomes agent for rabbit +86"
+        - do: testMessageFrom86
+        - do: ProcessQueue
+        - do: testCleanUp
 
     # Clean Up
     testCleanUp:
         - require: init
-        - unlink: "{{workDir}}/agents/{{controlSmsNumber}}"
-        - unlink: "{{workDir}}/sleepers/+99"
+        - unlink: "{{workDir}}/agents/+99"
 
     # Mock sendSms
     testMockSendSms:
@@ -289,26 +304,21 @@ sweetpotato:
                 - write: "{{controlSmsNumber}}"
  
     # Test Rabbit Message
-    testRabbitMessage:
+    testMessageFrom99:
         - require: init
         - workfile:
             path: "{{workDir}}/smsIn/+99/rabbit.sms"
             do:
-                - write: "h€l1ø Agent"
+                - write: "h€l1ø 86"
 
     # Test Agent Message
-    testAgentMessage:
+    testMessageFrom86:
         - require: init
-        - workfile:
-            path: "{{workDir}}/agents/+86"
-            overwrite: True
-            do:
-                - write: "+1632866163"
         - workfile:
             path: "{{workDir}}/smsIn/+86/agent.sms"
             overwrite: True
             do:
-                - write: "hellø rabb→t!"
+                - write: "hi→ 99!"
 
     # Test SMS Sending
     testSms:
