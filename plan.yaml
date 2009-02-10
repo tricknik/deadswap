@@ -1,8 +1,53 @@
 #~
 #~  sweetpotato execution plan 
-#~                               http://www.telekommunisten.net/sweetpotato
+#~           >>>  http://www.telekommunisten.net/sweetpotato
 
 sweetpotato:
+
+    init:
+        # deadSwap configuration
+        - token:
+
+        # STANDARD SETTINGS, YOU WILL NEED TO CHANGE THESE
+
+            # the control phone is the phone of the
+            # operator, it can add sleeper agents by
+            # send the number (with a + prefix) to
+            # the deadSwap Gateway.
+            # The control phone can not participate
+            # in the network because messages from it
+            # are never forwarded
+            controlSmsNumber: "+491632866163" 
+
+            #
+            # the workDir is where deadSwap stores its
+            # files, the dead swap process will need write
+            # permissions here
+            workDir: "/home/dk/.deadSwap"
+
+            # this is the amount of time in minutes
+            # after a rabbit has last recieved a message
+            # from an agent that deadSwap waits before
+            # making the rabbit a sleeper
+            agentMaturity: 15
+
+            # only use sms messages from numbers
+            # starting with this prefix
+            smsInPrefix: "+"
+
+
+        # ADVANCED SETTINGS, YOU WONT NEED TO CHANGE THESE
+
+            sendSmsTarget: sendSms
+            rabbitSmsNumber: "{{controlSmsNumber}}"
+
+        # verify working directory exists and is writable
+        - workfile:
+            path: "{{workDir}}/README"
+            do:
+                - write: "~# deadSwap.net"   
+                - write: "     >>> by Telekommunisten"
+        - echo: "~# DEADSWAP ACTIVATED @~~/~"
 
     deadSwap:
         - require: init
@@ -18,23 +63,6 @@ sweetpotato:
         - do: ForwardSleeperMessages  # Unretire agent, demote sleeper
         - do: ForwardRabbitMessages   # Deploy agents
 
-    init:
-        # set initial tokens
-        - token:
-            controlSmsNumber: "+491632866163"
-            workDir: "/home/dk/.deadSwap"
-            agentMaturity: 15
-            smsInPrefix: "+"
-        # defaults
-            sendSmsTarget: sendSms
-            rabbitSmsNumber: "{{controlSmsNumber}}"
-        # verify working directory exists and is writable
-        - workfile:
-            path: "{{workDir}}/README"
-            do:
-                - write: "~# deadSwap.net"   
-                - write: "     >>> by Telekommunisten"
-        - echo: "~# DEADSWAP ACTIVATED @~~/~"
     #~~
     QueueIncomingMessages:
         - require: init
